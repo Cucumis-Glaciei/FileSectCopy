@@ -1,0 +1,12 @@
+fsctl_get_retrieval_pointers 関連の情報
+https://docs.microsoft.com/en-us/windows/win32/api/winioctl/ni-winioctl-fsctl_get_retrieval_pointers
+https://docs.microsoft.com/en-us/windows/win32/api/winioctl/ni-winioctl-fsctl_get_retrieval_pointer_base
+https://docs.microsoft.com/en-us/windows/win32/api/winioctl/ns-winioctl-retrieval_pointers_buffer
+https://docs.microsoft.com/ja-jp/windows/win32/devio/calling-deviceiocontrol
+
+http://dalmore.blog7.fc2.com/blog-entry-68.html
+https://www.binarydevelop.com/article/deviceiocontrol-32794
+https://stackoverflow.com/questions/8682960/fsctl-get-retrieval-pointers-failure-on-very-small-file-on-a-nt-file-system
+
+getdiskfreespace 関連の情報
+https://docs.microsoft.com/ja-jp/windows/win32/api/fileapi/nf-fileapi-getdiskfreespacea
