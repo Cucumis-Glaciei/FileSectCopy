@@ -1,0 +1,25 @@
+memo
+
+DeviceIoControl APIにコントロールコードFSCTL_GET_RETRIEVAL_POINTERSを渡すと、対象ファイルのクラスター断片の分布を表すバイト列が得られる。
+これは、retrieval_pointers_buffer構造体のメモリ構造をそのまま反映したものである。
+ただし、クラスター開始位置のセクタ番号は、ファイルシステム構造によって異なる。これは、DeviceIoControl APIにコントロールコードfsctl_get_retrieval_pointer_baseを渡すことで得られる。
+クラスターとしての分布が得られるに過ぎないため、ディスク開始位置からのアドレスに変換するためにはディスククラスタサイズを取得する必要がある。
+これはgetdiskfreespaceaによって得られる。
+上記の内容は、fsutil file queryextentsを用いて取得することができるが、出力書式があまり機械可読ではない上に外部コマンドの呼び出しは遅いため、直にAPIを呼ぶのがよい。
+
+なお、NTFS圧縮・暗号化が行われているファイルについては、通常とは異なる挙動を示すようである。
+通常のファイル
+file queryextents 'X:\nyan3_20200401_172VCN: 
+0x0        クラスター: 0x5c       LCN: 0x44582
+
+圧縮した場合：fsutil.exe file queryextents 'X:\nyan3_20200401_172834 - コピー.png'
+VCN: 0x0        クラスター: 0xc        LCN: 0x3ef90
+VCN: 0xc        クラスター: 0x4        LCN: 0xffffffffffffffff
+VCN: 0x10       クラスター: 0x49       LCN: 0x3ef9c
+VCN: 0x59       クラスター: 0x7        LCN: 0xffffffffffffffff
+
+暗号化：
+fsutil.exe file queryextents 'X:\nyan3_20200401_172834 - コピー (2).png'
+VCN: 0x0        クラスター: 0x5c       LCN: 0x4069e
+※通常と変わらないように見えるが、「ファイルのプロパティ」を確認すると「ディスク上のサイズ」が１クラスタ分だけ多い。しかしfsutilの結果には反映されない。
+

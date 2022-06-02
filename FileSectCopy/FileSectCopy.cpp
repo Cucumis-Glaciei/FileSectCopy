@@ -4,14 +4,19 @@
 #include <iostream>
 #include <Windows.h>
 
-int main()
+int wmain(int argc, TCHAR** argv)
 {
+    if (argc < 2) {
+        wprintf(L"Usage: FileSectCopy file\n");
+        return -1;
+    }
+
     std::cout << "Hello World!\n";
 
-    std::string file_path = "X:\\cucumis_glaciei.png";
+    TCHAR* file_path =  argv[1];
 
-    HANDLE volume_handle = CreateFileA(
-        file_path.c_str(),
+    HANDLE volume_handle = CreateFileW(
+        file_path,
         0x00,
         FILE_SHARE_READ,
         NULL,
@@ -28,8 +33,8 @@ int main()
         std::cout << "Obtained file handle of " << file_path << ": " << volume_handle << std::endl;
     }
 
-    char inbuf[64]{};
-    char outbuf[512]{};
+    unsigned char inbuf[64]{};
+    unsigned char outbuf[512]{};
     DWORD bytes_returned = 0;
 
 
