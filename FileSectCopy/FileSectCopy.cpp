@@ -15,7 +15,7 @@ int wmain(int argc, TCHAR** argv)
 
     TCHAR* file_path =  argv[1];
 
-    HANDLE volume_handle = CreateFileW(
+    HANDLE file_handle = CreateFileW(
         file_path,
         0x00,
         FILE_SHARE_READ,
@@ -25,12 +25,12 @@ int wmain(int argc, TCHAR** argv)
         NULL
     );
 
-    if (volume_handle == INVALID_HANDLE_VALUE) {
+    if (file_handle == INVALID_HANDLE_VALUE) {
         std::cout << "Failed to obtain file handle of " << file_path << std::endl;
         return -1;
     }
     else {
-        std::cout << "Obtained file handle of " << file_path << ": " << volume_handle << std::endl;
+        std::cout << "Obtained file handle of " << file_path << ": " << file_handle << std::endl;
     }
 
     unsigned char inbuf[64]{};
@@ -39,7 +39,7 @@ int wmain(int argc, TCHAR** argv)
 
 
     BOOL status = DeviceIoControl(
-        volume_handle,
+        file_handle,
         FSCTL_GET_RETRIEVAL_POINTERS,
         inbuf,
         64,
@@ -52,11 +52,20 @@ int wmain(int argc, TCHAR** argv)
     std::cout << "Returned bytes of FSCTL_GET_RETRIEVAL_POINTERS: " << bytes_returned << std::endl;
     std::cout << "Status of FSCTL_GET_RETRIEVAL_POINTERS: " << status << std::endl;
 
-    for (int i = 0; i < bytes_returned; i++) {
-        printf("%02X ", outbuf[i]);
+    for (unsigned int i = 0; i < bytes_returned; i++) {
+        printf_s("%02X ", outbuf[i]);
+    }
+    putchar('\n');
+
+    // Verification of casting into RETRIEVAL_POINTERS_BUFFER
+    RETRIEVAL_POINTERS_BUFFER* retbuf = (RETRIEVAL_POINTERS_BUFFER*)outbuf;
+    
+    printf_s("Extent Count=%d, Starting VCN=%lld\n", retbuf->ExtentCount, retbuf->StartingVcn.QuadPart);
+    for (unsigned int i = 0; i < retbuf->ExtentCount; i++) {
+        printf_s("Next VCN=0x%llX LCN=%llX\n", retbuf->Extents[i].NextVcn.QuadPart, retbuf->Extents[i].Lcn.QuadPart);
     }
 
-    CloseHandle(volume_handle);
+    CloseHandle(file_handle);
 }
 
 // プログラムの実行: Ctrl + F5 または [デバッグ] > [デバッグなしで開始] メニュー

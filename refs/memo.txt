@@ -23,3 +23,6 @@ fsutil.exe file queryextents 'X:\nyan3_20200401_172834 - コピー (2).png'
 VCN: 0x0        クラスター: 0x5c       LCN: 0x4069e
 ※通常と変わらないように見えるが、「ファイルのプロパティ」を確認すると「ディスク上のサイズ」が１クラスタ分だけ多い。しかしfsutilの結果には反映されない。
 
+
+NTFSファイルシステムにおけるファイルの属性を取得には、次の構造体が関連している模様。ファイルが常駐(Resident)であるかどうかも判別できる？
+https://docs.microsoft.com/ja-jp/windows/win32/devnotes/attribute-record-header

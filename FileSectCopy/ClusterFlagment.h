@@ -1,7 +1,9 @@
 #pragma once
 
 /// <summary>
-/// ディスク上に存在するファイル断片を、論理クラスタ(Logical Cluster)としての開始位置および連続するクラスタ数を用いて記述するための構造体である。
+/// A structure to describe the location of file fragments on a volume, with the starting offsets of the continuous logical clusters and their quantity
+/// 
+/// ボリューム上に存在するファイル断片の所在を、論理クラスタ(Logical Cluster)としての開始位置および連続するクラスタ数を用いて記述するための構造体である。
 /// </summary>
 struct ClusterFlagment
 {
