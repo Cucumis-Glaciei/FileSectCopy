@@ -18,6 +18,13 @@ VCN: 0xc        クラスター: 0x4        LCN: 0xffffffffffffffff
 VCN: 0x10       クラスター: 0x49       LCN: 0x3ef9c
 VCN: 0x59       クラスター: 0x7        LCN: 0xffffffffffffffff
 
+NTFS圧縮のアルゴリズムについては、Linuxのサイトが詳しい。
+https://flatcap.github.io/linux-ntfs/ntfs/concepts/compression.html
+https://www.forensicfocus.com/articles/shrinking-the-gap-carving-ntfs-compressed-files/
+
+なお、専用のWindow APIも存在するようである。
+https://docs.microsoft.com/en-us/windows/win32/fileio/file-compression-and-decompression
+
 暗号化：
 fsutil.exe file queryextents 'X:\nyan3_20200401_172834 - コピー (2).png'
 VCN: 0x0        クラスター: 0x5c       LCN: 0x4069e
