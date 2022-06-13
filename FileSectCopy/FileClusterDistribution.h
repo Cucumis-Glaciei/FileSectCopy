@@ -43,7 +43,7 @@ public:
 /// <para> A constructor with the file path pointing a target file </para>
 /// <para> ファイルパス path で示されるファイルを対象としてコンストラクトする。 </para>
 /// </summary>
-	FileClusterDistribution(std::string path);
+	FileClusterDistribution(TCHAR* path);
 
 	/// <summary>
 	/// <para> コンストラクト時に与えられたパスで記述されるファイルに対して、その論理ボリューム上でのクラスタ分布を取得する。 <para>
