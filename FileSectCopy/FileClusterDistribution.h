@@ -3,6 +3,7 @@
 #include <vector>
 #include <Windows.h>
 #include "ClusterFlagment.h"
+#include <filesystem>
 
 /// <summary>
 /// <para> A class to obtain and parse the list of the clusters on the volume associated to a file </para>
@@ -11,10 +12,14 @@
 class FileClusterDistribution
 {
 private:
-	std::string file_path;
-	char volume_of_file;
+	const int InitialPointersBufferSize = 8192;
+
+	std::filesystem::path file_path;
+	char file_driveletter;
 	HANDLE file_handle;
-	RETRIEVAL_POINTERS_BUFFER retrieval_pointers;
+	std::vector<unsigned char> retrieval_pointers;
+	long retrieval_pointers_base=0;
+//	int cluster_size;
 
 
 	/// <summary>
@@ -44,7 +49,7 @@ public:
 /// <para> A constructor with the file path pointing a target file </para>
 /// <para> ファイルパス path で示されるファイルを対象としてコンストラクトする。 </para>
 /// </summary>
-	FileClusterDistribution(TCHAR* path);
+	FileClusterDistribution(TCHAR* path=nullptr);
 
 	/// <summary>
 	/// <para> コンストラクト時に与えられたパスで記述されるファイルに対して、その論理ボリューム上でのクラスタ分布を取得する。 <para>

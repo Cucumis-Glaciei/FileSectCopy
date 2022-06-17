@@ -7,7 +7,27 @@
 #include <filesystem>
 #include <locale>
 
+#include "FileClusterDistribution.h"
+
 int wmain(int argc, TCHAR** argv)
+{
+    if (argc < 2) {
+        wprintf(L"Usage: FileSectCopy file\n");
+        return -1;
+    }
+
+    try {
+        FileClusterDistribution FileClusterDistribution(argv[1]);
+    }
+    catch (std::exception e) {
+        std::cout << e.what() << std::endl;
+        return -1;
+    }
+
+    return 0;
+}
+
+int wmain_old(int argc, TCHAR** argv)
 {
     if (argc < 2) {
         wprintf(L"Usage: FileSectCopy file\n");
@@ -26,7 +46,7 @@ int wmain(int argc, TCHAR** argv)
     std::cout << "Target File: " << file_path.string() << "\nDrive Letter: " << drive_letter << std::endl;
 
 
-    HANDLE file_handle = CreateFileW(
+    HANDLE file_handle = CreateFile(
         file_path_str,
         0x00,
         FILE_SHARE_READ,
@@ -44,7 +64,6 @@ int wmain(int argc, TCHAR** argv)
         std::cout << "Obtained file handle of " << file_path_str << ": " << file_handle << std::endl;
     }
 
-    std::vector<unsigned char> invec(8);
     STARTING_VCN_INPUT_BUFFER vcn_input{};
     vcn_input.StartingVcn.QuadPart = 0;
     std::vector<unsigned char> outvec(128);
