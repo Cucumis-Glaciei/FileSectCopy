@@ -4,6 +4,8 @@
 #include <iostream>
 #include <Windows.h>
 #include <vector>
+#include <filesystem>
+#include <locale>
 
 int wmain(int argc, TCHAR** argv)
 {
@@ -14,10 +16,18 @@ int wmain(int argc, TCHAR** argv)
 
     std::cout << "Hello World!\n";
 
-    TCHAR* file_path =  argv[1];
+    TCHAR* file_path_str =  argv[1];
+    std::filesystem::path file_path = file_path_str;
+    char drive_letter = file_path.root_name().string().at(0);
+    if (!std::isalpha(drive_letter)) {
+        std::cout << "Target File: " << file_path.string() << " does not have Drive Letter" << std::endl;
+        return -1;
+    }
+    std::cout << "Target File: " << file_path.string() << "\nDrive Letter: " << drive_letter << std::endl;
+
 
     HANDLE file_handle = CreateFileW(
-        file_path,
+        file_path_str,
         0x00,
         FILE_SHARE_READ,
         NULL,
@@ -27,25 +37,27 @@ int wmain(int argc, TCHAR** argv)
     );
 
     if (file_handle == INVALID_HANDLE_VALUE) {
-        std::cout << "Failed to obtain file handle of " << file_path << std::endl;
+        std::cout << "Failed to obtain file handle of " << file_path_str << std::endl;
         return -1;
     }
     else {
-        std::cout << "Obtained file handle of " << file_path << ": " << file_handle << std::endl;
+        std::cout << "Obtained file handle of " << file_path_str << ": " << file_handle << std::endl;
     }
 
     std::vector<unsigned char> invec(8);
+    STARTING_VCN_INPUT_BUFFER vcn_input{};
+    vcn_input.StartingVcn.QuadPart = 0;
     std::vector<unsigned char> outvec(128);
     DWORD bytes_returned = 0;
     DWORD errorcode = 0;
-    BOOL status_deviceiocontrol;
+    BOOL status_deviceiocontrol = FALSE;
 
     do {
         status_deviceiocontrol = DeviceIoControl(
             file_handle,
             FSCTL_GET_RETRIEVAL_POINTERS,
-            invec.data(),
-            invec.size(),
+            &vcn_input,
+            sizeof vcn_input,
             outvec.data(),
             outvec.size(),
             &bytes_returned,

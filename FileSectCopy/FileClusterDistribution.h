@@ -14,6 +14,7 @@ private:
 	std::string file_path;
 	char volume_of_file;
 	HANDLE file_handle;
+	RETRIEVAL_POINTERS_BUFFER retrieval_pointers;
 
 
 	/// <summary>
