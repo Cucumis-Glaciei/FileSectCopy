@@ -16,7 +16,7 @@ private:
 
 	std::filesystem::path file_path;
 	char file_driveletter;
-	HANDLE file_handle;
+//	HANDLE file_handle;
 	std::vector<unsigned char> retrieval_pointers;
 	long retrieval_pointers_base=0;
 //	int cluster_size;
@@ -59,5 +59,10 @@ public:
 	/// </returns>
 	std::vector<ClusterFlagment> getDistribution();
 
+	/// <summary>
+	/// <para> コンストラクト時に与えられたパスで記述されるファイルに対して、そのドライブレターを取得する。 </para>
+	/// </summary>
+	/// <returns></returns>
+	char getDriveLetter();
 };
 

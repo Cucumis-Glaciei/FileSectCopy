@@ -33,3 +33,32 @@ VCN: 0x0        クラスター: 0x5c       LCN: 0x4069e
 
 NTFSファイルシステムにおけるファイルの属性を取得には、次の構造体が関連している模様。ファイルが常駐(Resident)であるかどうかも判別できる？
 https://docs.microsoft.com/ja-jp/windows/win32/devnotes/attribute-record-header
+
+-------------------------------------------------------------------------------
+
+FSCTL_GET_RETRIEVAL_POINTER_BASEについて
+
+ボリュームのファイルハンドルが必要になるが、GENERIC_READを付与して取得しないとDeviceIoControlの呼び出しに失敗する。
+
+FSCTL_GET_RETRIEVAL_POINTER_BASEを用いてDeviceIoControlを呼び出す場合、入力バッファは不要(ヌルポインタを渡し、サイズはゼロとする)。
+出力バッファも、LARGE_INTEGER変数へのポインタとLARGE_INTEGERのサイズ(8)でよい。
+
+テストしたところ、FAT12, FAT16, FAT32, exFAT, NTFS で成功する。
+UDFではFSCTL_RETRIVAL_POINTERSまではうまくいくが、FSCTL_GET_RETRIEVAL_POINTER_BASEはなぜか失敗する。
+フロッピーディスクのFAT12でも正しく動作するが、意味はあるだろうか？
+
+PS D:\Documents\projects\FileSectCopy> .\x64\Debug\FileSectCopy.exe 'A:\ANTHEM.COD'
+[FileClusterDistribution] Target File: A:\ANTHEM.COD
+Drive Letter: A
+[FileClusterDistribution] Obtained file handle of "A:\\ANTHEM.COD": 0000000000000098
+Returned bytes of FSCTL_GET_RETRIEVAL_POINTERS: 32
+Status of FSCTL_GET_RETRIEVAL_POINTERS: 1
+Error Code of FSCTL_GET_RETRIEVAL_POINTERS: 0
+01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+Extent Count=1, Starting VCN=0
+Next VCN=0x2 LCN=0
+-------------------------------------------
+Drive Letter: \\.\A:
+180
+Status ofDeviceIoControl: 1, Returned Bytes: 8, Retrieval Pointers Base: 33
+
