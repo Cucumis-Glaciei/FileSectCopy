@@ -6,6 +6,7 @@
 #include <vector>
 #include <filesystem>
 #include <locale>
+#include <tchar.h>
 
 #include "FileClusterDistribution.h"
 
@@ -29,12 +30,14 @@ int wmain(int argc, TCHAR** argv)
 	puts("-------------------------------------------");
 	// PoC for FSCTL_GET_RETRIEVAL_POINTER_BASE 
 	char drive_letter = clusterdistrib->getDriveLetter();
-	char volume_path[] = { '\\' , '\\', '.', '\\', drive_letter, ':', (char)0 };
+	TCHAR volume_path[32];
+	_stprintf_s(volume_path, 32, _T("\\\\.\\%c:"), drive_letter);
+	//{ '\\' , '\\', '.', '\\', drive_letter, ':', (char)0 };
 
-	printf("Drive Letter: %s\n", volume_path);
+	printf("Drive Letter: %ls\n", volume_path);
 
 	// Get File Handle for the volume
-	HANDLE volume_handle = CreateFileA(
+	HANDLE volume_handle = CreateFile(
 		volume_path,
 		GENERIC_READ,
 		FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -72,6 +75,31 @@ int wmain(int argc, TCHAR** argv)
 	CloseHandle(volume_handle);
 
 	delete clusterdistrib;
+	puts("-------------------------------------------");
+
+	TCHAR rootPath[16];
+	_stprintf_s(rootPath, 16, _T("%c:\\"), drive_letter);
+	//{drive_letter, ':', '\\', (char)0};
+	DWORD sectors_per_cluster = 0;
+	DWORD bytesPerSector = 0;
+	DWORD numFreeClusters = 0;
+	DWORD numOfClusters = 0;
+
+	BOOL diskFreeSpace_result;
+
+	diskFreeSpace_result = GetDiskFreeSpace(
+		rootPath,
+		&sectors_per_cluster,
+		&bytesPerSector,
+		&numFreeClusters,
+		&numOfClusters
+	);
+	if (diskFreeSpace_result == TRUE) {
+		printf("Status of GetDiskFreeSpace: %d, Sectors / Cluster: %d, Bytes / Cluster: %d, Number of free clusters: %d, Total number of clusters: %d\n", diskFreeSpace_result, sectors_per_cluster, bytesPerSector, numFreeClusters, numOfClusters);
+	}
+	else {
+		printf("Status of GetDiskFreeSpace: %d\n", diskFreeSpace_result);
+	}
 
 	return 0;
 }
