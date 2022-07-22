@@ -31,9 +31,17 @@ int wmain(int argc, TCHAR** argv)
 	// PoC for FSCTL_GET_RETRIEVAL_POINTER_BASE 
 	
 	std::vector<ClusterFragment> cluster_fragments = clusterdistrib->getDistribution();
+	int bytes_per_cluster = clusterdistrib->bytes_per_cluster;
+	int bytes_per_sector = clusterdistrib->bytes_per_sector;
+	LONGLONG retrieval_pointers_base = clusterdistrib->getRetrievalPointerBase();
 
 	for (ClusterFragment frag : cluster_fragments) {
-		_tprintf_s(_T("Cluster: 0x%llX\t LCN: 0x%llX\n"), frag.fragmentLength, frag.startClusterIndex);
+		_tprintf_s(_T("Cluster: 0x%llX\tLCN: 0x%llX;\tLength(Bytes): %llX\t Offset: %llX\n"), 
+			frag.fragmentLength, 
+			frag.startClusterIndex,
+			frag.fragmentLength * bytes_per_cluster,
+			frag.startClusterIndex* bytes_per_cluster + retrieval_pointers_base*bytes_per_sector
+		);
 	}
 
 	delete clusterdistrib;

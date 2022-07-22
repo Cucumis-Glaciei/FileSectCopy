@@ -16,10 +16,9 @@ private:
 
 	std::filesystem::path file_path;
 	char file_driveletter;
-//	HANDLE file_handle;
+	//	HANDLE file_handle;
 	std::vector<unsigned char> retrieval_pointers;
-	long retrieval_pointers_base=0;
-//	int cluster_size;
+	long retrieval_pointers_base = 0;
 
 
 	/// <summary>
@@ -30,6 +29,17 @@ private:
 	RETRIEVAL_POINTERS_BUFFER getRetrievalPointers();
 
 	/// <summary>
+/// <para> A method to obtain the cluster size of the volume containing the file. </para>
+/// <para> ファイルが格納されているボリュームのクラスタサイズを取得する。 </para>
+/// </summary>
+/// <returns></returns>
+	void getBytesPerCluster();
+
+public:
+	int bytes_per_cluster = 0;
+	int bytes_per_sector = 0;
+
+	/// <summary>
 	/// <para> A method to obtain the sector number used as the starting point of the logical cluster number, calling the DeviceIoControl API with the FSCTL_GET_RETRIEVAL_POINTER_BASE control code. </para>
 	/// <para> That is, if the logical cluster number (LCN) in the result of FSCTL_GET_RETRIEVAL_POINTERS is zero, that file fragment starts from this sector. </para>
 	/// FSCTL_GET_RETRIEVAL_POINTER_BASE でDeviceIoControl API を呼び出し、ロジカルクラスタ番号のオフセットとなるセクタ番号を取得する。 
@@ -37,19 +47,12 @@ private:
 	/// <returns></returns>
 	LONGLONG getRetrievalPointerBase();
 
-	/// <summary>
-	/// <para> A method to obtain the cluster size of the volume containing the file. </para>
-	/// <para> ファイルが格納されているボリュームのクラスタサイズを取得する。 </para>
-	/// </summary>
-	/// <returns></returns>
-	int getClusterSize();
 
-public:
-/// <summary>
-/// <para> A constructor with the file path pointing a target file </para>
-/// <para> ファイルパス path で示されるファイルを対象としてコンストラクトする。 </para>
-/// </summary>
-	FileClusterDistribution(TCHAR* path=nullptr);
+	/// <summary>
+	/// <para> A constructor with the file path pointing a target file </para>
+	/// <para> ファイルパス path で示されるファイルを対象としてコンストラクトする。 </para>
+	/// </summary>
+	FileClusterDistribution(TCHAR* path = nullptr);
 
 	/// <summary>
 	/// <para> コンストラクト時に与えられたパスで記述されるファイルに対して、その論理ボリューム上でのクラスタ分布を取得する。 <para>

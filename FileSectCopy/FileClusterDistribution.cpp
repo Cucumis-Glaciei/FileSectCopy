@@ -96,7 +96,7 @@ FileClusterDistribution::FileClusterDistribution(TCHAR* path) {
     // File handle must be closed after use
     CloseHandle(file_handle);
 
-
+    getBytesPerCluster();
 }
 
 std::vector<ClusterFragment> FileClusterDistribution::getDistribution()
@@ -174,7 +174,7 @@ LONGLONG FileClusterDistribution::getRetrievalPointerBase() {
 }
 
 
-int FileClusterDistribution::getClusterSize() {
+void FileClusterDistribution::getBytesPerCluster() {
     TCHAR rootPath[16];
     _stprintf_s(rootPath, 16, _T("%c:\\"), file_driveletter);
     //{drive_letter, ':', '\\', (char)0};
@@ -199,8 +199,8 @@ int FileClusterDistribution::getClusterSize() {
         printf("Status of GetDiskFreeSpace: %d\n", diskFreeSpace_result);
     }
 
-    return sectors_per_cluster * bytesPerSector;
-
+    this->bytes_per_cluster = sectors_per_cluster * bytesPerSector;
+    this->bytes_per_sector = bytesPerSector;
 }
 
 
