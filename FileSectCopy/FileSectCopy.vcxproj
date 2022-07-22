@@ -140,12 +140,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ClusterFlagment.cpp" />
+    <ClCompile Include="ClusterFragment.cpp" />
     <ClCompile Include="FileClusterDistribution.cpp" />
     <ClCompile Include="FileSectCopy.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ClusterFlagment.h" />
+    <ClInclude Include="ClusterFragment.h" />
     <ClInclude Include="FileClusterDistribution.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

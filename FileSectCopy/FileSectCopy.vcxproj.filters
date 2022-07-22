@@ -21,7 +21,7 @@
     <ClCompile Include="FileClusterDistribution.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="ClusterFlagment.cpp">
+    <ClCompile Include="ClusterFragment.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -29,7 +29,7 @@
     <ClInclude Include="FileClusterDistribution.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="ClusterFlagment.h">
+    <ClInclude Include="ClusterFragment.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

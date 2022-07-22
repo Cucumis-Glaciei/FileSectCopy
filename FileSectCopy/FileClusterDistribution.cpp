@@ -4,6 +4,8 @@
 #include <Windows.h>
 #include <iostream>
 #include <filesystem>
+#include <tchar.h>
+
 
 FileClusterDistribution::FileClusterDistribution(TCHAR* path) {
 
@@ -97,9 +99,19 @@ FileClusterDistribution::FileClusterDistribution(TCHAR* path) {
 
 }
 
-std::vector<ClusterFlagment> FileClusterDistribution::getDistribution()
+std::vector<ClusterFragment> FileClusterDistribution::getDistribution()
 {
-	return std::vector<ClusterFlagment>();
+    std::vector<ClusterFragment> cluster_fragment;
+    RETRIEVAL_POINTERS_BUFFER* retbuf = (RETRIEVAL_POINTERS_BUFFER*) retrieval_pointers.data();
+    LONGLONG prev_start_vcn = 0;
+
+    for (unsigned int i = 0; i < retbuf->ExtentCount; i++) {
+        LONGLONG fragment_length = retbuf->Extents[i].NextVcn.QuadPart - prev_start_vcn;
+        prev_start_vcn = retbuf->Extents[i].NextVcn.QuadPart;
+        cluster_fragment.push_back(ClusterFragment(retbuf->Extents[i].Lcn.QuadPart, fragment_length));
+    }
+
+	return cluster_fragment;
 }
 
 char FileClusterDistribution::getDriveLetter()
@@ -113,13 +125,81 @@ RETRIEVAL_POINTERS_BUFFER FileClusterDistribution::getRetrievalPointers() {
 }
 
 
-long FileClusterDistribution::getRetrievalPointerBase() {
-	return 0l;
+LONGLONG FileClusterDistribution::getRetrievalPointerBase() {
+    TCHAR volume_path[32];
+    _stprintf_s(volume_path, 32, _T("\\\\.\\%c:"), file_driveletter);
+    //{ '\\' , '\\', '.', '\\', drive_letter, ':', (char)0 };
+
+    printf("Drive Letter: %ls\n", volume_path);
+
+    // Get File Handle for the volume
+    HANDLE volume_handle = CreateFile(
+        volume_path,
+        GENERIC_READ,
+        FILE_SHARE_READ | FILE_SHARE_WRITE,
+        NULL,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
+    if (volume_handle == INVALID_HANDLE_VALUE) {
+        return -1;
+    }
+    printf("%lld\n", (long long)volume_handle);
+
+
+    LARGE_INTEGER retrieval_pointer_base{};
+    DWORD returned_bytes;
+    BOOL status_deviceiocontrol = DeviceIoControl(
+        volume_handle,
+        FSCTL_GET_RETRIEVAL_POINTER_BASE,
+        (LPVOID)NULL, // No need for input buffer
+        (DWORD)0,
+        &retrieval_pointer_base,
+        sizeof(LARGE_INTEGER),
+        &returned_bytes,
+        NULL
+    );
+
+    printf("Status ofDeviceIoControl: %d, Returned Bytes: %d, Retrieval Pointers Base: %lld\n",
+        status_deviceiocontrol,
+        returned_bytes,
+        retrieval_pointer_base.QuadPart
+    );
+
+    CloseHandle(volume_handle);
+
+    return retrieval_pointer_base.QuadPart;
 }
 
 
 int FileClusterDistribution::getClusterSize() {
-	return 0;
+    TCHAR rootPath[16];
+    _stprintf_s(rootPath, 16, _T("%c:\\"), file_driveletter);
+    //{drive_letter, ':', '\\', (char)0};
+    DWORD sectors_per_cluster = 0;
+    DWORD bytesPerSector = 0;
+    DWORD numFreeClusters = 0;
+    DWORD numOfClusters = 0;
+
+    BOOL diskFreeSpace_result;
+
+    diskFreeSpace_result = GetDiskFreeSpace(
+        rootPath,
+        &sectors_per_cluster,
+        &bytesPerSector,
+        &numFreeClusters,
+        &numOfClusters
+    );
+    if (diskFreeSpace_result == TRUE) {
+        printf("Status of GetDiskFreeSpace: %d, Sectors / Cluster: %d, Bytes / Sector: %d, Number of free clusters: %d, Total number of clusters: %d\n", diskFreeSpace_result, sectors_per_cluster, bytesPerSector, numFreeClusters, numOfClusters);
+    }
+    else {
+        printf("Status of GetDiskFreeSpace: %d\n", diskFreeSpace_result);
+    }
+
+    return sectors_per_cluster * bytesPerSector;
 
 }
 

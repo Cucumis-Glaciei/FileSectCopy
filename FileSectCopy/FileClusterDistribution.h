@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <Windows.h>
-#include "ClusterFlagment.h"
+#include "ClusterFragment.h"
 #include <filesystem>
 
 /// <summary>
@@ -35,7 +35,7 @@ private:
 	/// FSCTL_GET_RETRIEVAL_POINTER_BASE でDeviceIoControl API を呼び出し、ロジカルクラスタ番号のオフセットとなるセクタ番号を取得する。 
 	/// </summary>
 	/// <returns></returns>
-	long getRetrievalPointerBase();
+	LONGLONG getRetrievalPointerBase();
 
 	/// <summary>
 	/// <para> A method to obtain the cluster size of the volume containing the file. </para>
@@ -57,7 +57,7 @@ public:
 	/// <returns>
 	/// ClusterFlagment構造体のベクターで記述された、ファイルのクラスタ分布
 	/// </returns>
-	std::vector<ClusterFlagment> getDistribution();
+	std::vector<ClusterFragment> getDistribution();
 
 	/// <summary>
 	/// <para> コンストラクト時に与えられたパスで記述されるファイルに対して、そのドライブレターを取得する。 </para>
