@@ -5,7 +5,8 @@
 #include <iostream>
 #include <filesystem>
 #include <tchar.h>
-
+#include <shlwapi.h>
+#pragma comment( lib, "Shlwapi.lib" ) 
 
 FileClusterDistribution::FileClusterDistribution(TCHAR* path) {
 
@@ -15,14 +16,6 @@ FileClusterDistribution::FileClusterDistribution(TCHAR* path) {
 
     // std::filesystem::path could be made from TCHAR[]
     file_path = path;
-    // Check if the path has a drive letter
-    file_driveletter = file_path.root_name().string().at(0);
-    if (!std::isalpha(file_driveletter)) {
-        std::cout << "Target File: " << file_path.string() << " does not have Drive Letter" << std::endl;
-        throw std::runtime_error("[FileClusterDistribution] Target File: " + file_path.string() + " does not have Drive Letter");
-    }
-    std::cout << "[FileClusterDistribution] Target File: " << file_path.string() << "\nDrive Letter: " << file_driveletter << std::endl;
-
 
     // Get File Handle for the path
     HANDLE file_handle = CreateFile(
@@ -41,6 +34,18 @@ FileClusterDistribution::FileClusterDistribution(TCHAR* path) {
     else {
         std::cout << "[FileClusterDistribution] Obtained file handle of " << file_path << ": " << file_handle << std::endl;
     }
+
+    // Obtain the drive letter relevant to the file specified by "path"
+    int drive_num = PathGetDriveNumber(path);
+    file_driveletter = drive_num == -1 ? ' ' : (TCHAR)('A' + drive_num);
+
+    // Check if the path has a correct drive letter
+    if (!std::isalpha(file_driveletter)) {
+        std::cout << "Target File: " << file_path.string() << " does not have Drive Letter" << std::endl;
+        throw std::runtime_error("[FileClusterDistribution] Target File: " + file_path.string() + " does not have Drive Letter");
+    }
+    std::cout << "[FileClusterDistribution] Target File: " << file_path.string() << std::endl;
+    _tprintf_s(_T("Drive Letter: %c\n"), file_driveletter);
 
     // Input buffer for FSCTL_GET_RETRIEVAL_POINTERS is starting virtual cluster number described by STARTING_VCN_INPUT_BUFFER structure
     STARTING_VCN_INPUT_BUFFER vcn_input{};
@@ -114,7 +119,7 @@ std::vector<ClusterFragment> FileClusterDistribution::getDistribution()
 	return cluster_fragment;
 }
 
-char FileClusterDistribution::getDriveLetter()
+TCHAR FileClusterDistribution::getDriveLetter()
 {
     return file_driveletter;
 }

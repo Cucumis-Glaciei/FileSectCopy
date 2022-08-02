@@ -15,12 +15,22 @@ private:
 	const int InitialPointersBufferSize = 8192;
 
 	std::filesystem::path file_path;
-	char file_driveletter;
+	TCHAR file_driveletter;
 	//	HANDLE file_handle;
 	std::vector<unsigned char> retrieval_pointers;
 	long retrieval_pointers_base = 0;
 
+	class RetrievalPointerBase
+	{
+	public:
+		RetrievalPointerBase();
+	};
 
+	class DriveInfo 
+	{
+	public:
+		DriveInfo();
+	};
 	/// <summary>
 	/// <para> A method to obtain the result of the RETRIEVAL_POINTERS_BUFFER type, calling the DeviceIoControl API with the FSCTL_GET_RETRIEVAL_POINTERS control code </para>
 	/// <para> FSCTL_GET_RETRIEVAL_POINTERS 制御コード で DeviceIoControl API を呼び出し、RETRIEVAL_POINTERS_BUFFER 型の結果を取得する。 </para>
@@ -66,6 +76,6 @@ public:
 	/// <para> コンストラクト時に与えられたパスで記述されるファイルに対して、そのドライブレターを取得する。 </para>
 	/// </summary>
 	/// <returns></returns>
-	char getDriveLetter();
+	TCHAR getDriveLetter();
 };
 
