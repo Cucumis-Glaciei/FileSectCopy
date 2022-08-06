@@ -2,6 +2,7 @@
 //
 
 #include <iostream>
+#include <fstream>
 #include <Windows.h>
 #include <vector>
 #include <filesystem>
@@ -18,7 +19,6 @@ int wmain(int argc, TCHAR** argv)
 	}
 
 	FileClusterDistribution* clusterdistrib;
-
 	try {
 		clusterdistrib = new FileClusterDistribution(argv[1]);
 	}
@@ -28,23 +28,68 @@ int wmain(int argc, TCHAR** argv)
 	}
 
 	puts("-------------------------------------------");
-	// PoC for FSCTL_GET_RETRIEVAL_POINTER_BASE 
-	
+
+	// Get File Handle for the volume
+	HANDLE volume_handle = CreateFile(
+		_T("\\\\.\\X:"),
+		GENERIC_READ,
+		FILE_SHARE_READ | FILE_SHARE_WRITE,
+		NULL,
+		OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL,
+		NULL
+	);
+
+	if (volume_handle == INVALID_HANDLE_VALUE) {
+		return -1;
+	}
+	LARGE_INTEGER offset{};
+	offset.QuadPart = 256;
+	LARGE_INTEGER file_pointer;
+	BOOL result_SetFilePointerEx = SetFilePointer(
+		volume_handle,
+		512,
+		0,
+		FILE_BEGIN
+	);
+	if (result_SetFilePointerEx == FALSE) {
+		_tprintf_s(_T("SetFilePointerEx Fail"));
+		return -1;
+	}
+	std::vector<unsigned char> readbuf = std::vector<unsigned char>(512);
+	DWORD bytes_read;
+	BOOL result_readfile = ReadFile(
+		volume_handle,
+		readbuf.data(),
+		512,
+		&bytes_read,
+		NULL
+	);
+	if (result_readfile == FALSE) {
+		DWORD err = GetLastError();
+		_tprintf_s(_T("ReadFile Fail %d\n"), err);
+	}
+	for (int i = 0; i < 256; i++) {
+		_tprintf_s(_T("%02X "), readbuf[i]);
+	}
+
 	std::vector<ClusterFragment> cluster_fragments = clusterdistrib->getDistribution();
 	int bytes_per_cluster = clusterdistrib->bytes_per_cluster;
 	int bytes_per_sector = clusterdistrib->bytes_per_sector;
 	LONGLONG retrieval_pointers_base = clusterdistrib->getRetrievalPointerBase();
 
 	for (ClusterFragment frag : cluster_fragments) {
-		_tprintf_s(_T("Cluster: 0x%llX\tLCN: 0x%llX;\tLength(Bytes): %llX\t Offset: %llX\n"), 
-			frag.fragmentLength, 
+		_tprintf_s(_T("Cluster: 0x%llX\tLCN: 0x%llX;\tLength(Bytes): %llX\t Offset: %llX\n"),
+			frag.fragmentLength,
 			frag.startClusterIndex,
 			frag.fragmentLength * bytes_per_cluster,
-			frag.startClusterIndex* bytes_per_cluster + retrieval_pointers_base*bytes_per_sector
+			frag.startClusterIndex * bytes_per_cluster + retrieval_pointers_base * bytes_per_sector
 		);
 	}
 
-	delete clusterdistrib;
+
+
+	//delete clusterdistrib;
 	return 0;
 }
 

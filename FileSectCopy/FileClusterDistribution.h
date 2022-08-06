@@ -20,17 +20,17 @@ private:
 	std::vector<unsigned char> retrieval_pointers;
 	long retrieval_pointers_base = 0;
 
-	class RetrievalPointerBase
-	{
-	public:
-		RetrievalPointerBase();
-	};
+	//class RetrievalPointerBase
+	//{
+	//public:
+	//	RetrievalPointerBase();
+	//};
 
-	class DriveInfo 
-	{
-	public:
-		DriveInfo();
-	};
+	//class DriveInfo 
+	//{
+	//public:
+	//	DriveInfo();
+	//};
 	/// <summary>
 	/// <para> A method to obtain the result of the RETRIEVAL_POINTERS_BUFFER type, calling the DeviceIoControl API with the FSCTL_GET_RETRIEVAL_POINTERS control code </para>
 	/// <para> FSCTL_GET_RETRIEVAL_POINTERS 制御コード で DeviceIoControl API を呼び出し、RETRIEVAL_POINTERS_BUFFER 型の結果を取得する。 </para>
@@ -48,6 +48,7 @@ private:
 public:
 	int bytes_per_cluster = 0;
 	int bytes_per_sector = 0;
+	LONGLONG file_size = 0;
 
 	/// <summary>
 	/// <para> A method to obtain the sector number used as the starting point of the logical cluster number, calling the DeviceIoControl API with the FSCTL_GET_RETRIEVAL_POINTER_BASE control code. </para>

@@ -62,3 +62,18 @@ Drive Letter: \\.\A:
 180
 Status ofDeviceIoControl: 1, Returned Bytes: 8, Retrieval Pointers Base: 33
 
+-------------------------------------------------
+ファイルが存在するボリュームの取得方法について
+PathGetDriveNumber APIで取得できる。 shlwapi.h の読み込みが必要。専用のlibファイルもリンクする必要がある。#pragma comment( lib, "Shlwapi.lib" ) 
+
+------------------------------------------------
+ファイルサイズの取得
+GetFileSizeEx APIを使用すればよい
+
+-----------------------------------------------
+ボリュームからのコピーについて
+fstreamを使用すると、なぜかseekgで失敗する。このため、SetFilePointerEx APIでファイルポインタを操作してシークを行う必要がある。
+下記を参照すること：
+https://docs.microsoft.com/ja-jp/windows/win32/api/fileapi/nf-fileapi-setfilepointerex?redirectedfrom=MSDN
+-> どうやらSetFilePointerEx, ReadFileを使用する場合も、ボリュームなどのデバイスファイルに対してはセクター境界に揃えないと失敗するらしい
+https://stackoverflow.com/questions/31697229/readfile-function-returns-error-invalid-parameter
