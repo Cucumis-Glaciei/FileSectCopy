@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <Windows.h>
-#include "ClusterFragment.h"
+#include "FileAsClusterFragments.h"
 #include <filesystem>
 
 /// <summary>

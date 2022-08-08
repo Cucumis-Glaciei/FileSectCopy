@@ -1,4 +1,4 @@
-#include "FileClusterDistribution.h"
+#include "FileClusterFragmentsRetriever.h"
 
 #include <string>
 #include <Windows.h>
@@ -159,7 +159,7 @@ LONGLONG FileClusterDistribution::getRetrievalPointerBase() {
 	if (volume_handle == INVALID_HANDLE_VALUE) {
 		return -1;
 	}
-	printf("%lld\n", (long long)volume_handle);
+	printf("Obtained Volume Handle: 0x%llX\n", (long long)volume_handle);
 
 
 	LARGE_INTEGER retrieval_pointer_base{};

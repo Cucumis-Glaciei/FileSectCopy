@@ -18,18 +18,18 @@
     <ClCompile Include="FileSectCopy.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="FileClusterDistribution.cpp">
+    <ClCompile Include="FileClusterFragmentsRetriever.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="ClusterFragment.cpp">
+    <ClCompile Include="FileAsClusterFragments.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="FileClusterDistribution.h">
+    <ClInclude Include="FileClusterFragmentsRetriever.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="ClusterFragment.h">
+    <ClInclude Include="FileAsClusterFragments.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

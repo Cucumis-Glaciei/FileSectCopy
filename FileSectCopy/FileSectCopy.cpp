@@ -9,12 +9,17 @@
 #include <locale>
 #include <tchar.h>
 
-#include "FileClusterDistribution.h"
+#include "FileClusterFragmentsRetriever.h"
 
 int wmain(int argc, TCHAR** argv)
 {
-	if (argc < 2) {
-		wprintf(L"Usage: FileSectCopy file\n");
+	if (argc < 3) {
+		_tprintf(_T("Usage: FileSectCopy infile outfile\n"));
+		return -1;
+	}
+
+	if (std::filesystem::exists(argv[2])) {
+		_tprintf(_T("outfile: %s already exists\n"), argv[2]);
 		return -1;
 	}
 
@@ -28,10 +33,12 @@ int wmain(int argc, TCHAR** argv)
 	}
 
 	puts("-------------------------------------------");
+	TCHAR volume_path[32];
+	_stprintf_s(volume_path, 32, _T("\\\\.\\%c:"), clusterdistrib->getDriveLetter());
 
 	// Get File Handle for the volume
 	HANDLE volume_handle = CreateFile(
-		_T("\\\\.\\X:"),
+		volume_path,
 		GENERIC_READ,
 		FILE_SHARE_READ | FILE_SHARE_WRITE,
 		NULL,
@@ -43,49 +50,61 @@ int wmain(int argc, TCHAR** argv)
 	if (volume_handle == INVALID_HANDLE_VALUE) {
 		return -1;
 	}
-	LARGE_INTEGER offset{};
-	offset.QuadPart = 256;
-	LARGE_INTEGER file_pointer;
-	BOOL result_SetFilePointerEx = SetFilePointer(
-		volume_handle,
-		512,
-		0,
-		FILE_BEGIN
-	);
-	if (result_SetFilePointerEx == FALSE) {
-		_tprintf_s(_T("SetFilePointerEx Fail"));
-		return -1;
-	}
-	std::vector<unsigned char> readbuf = std::vector<unsigned char>(512);
-	DWORD bytes_read;
-	BOOL result_readfile = ReadFile(
-		volume_handle,
-		readbuf.data(),
-		512,
-		&bytes_read,
-		NULL
-	);
-	if (result_readfile == FALSE) {
-		DWORD err = GetLastError();
-		_tprintf_s(_T("ReadFile Fail %d\n"), err);
-	}
-	for (int i = 0; i < 256; i++) {
-		_tprintf_s(_T("%02X "), readbuf[i]);
-	}
 
 	std::vector<ClusterFragment> cluster_fragments = clusterdistrib->getDistribution();
 	int bytes_per_cluster = clusterdistrib->bytes_per_cluster;
 	int bytes_per_sector = clusterdistrib->bytes_per_sector;
 	LONGLONG retrieval_pointers_base = clusterdistrib->getRetrievalPointerBase();
 
+	int bytes_written = 0;
+	std::ofstream out_file(argv[2], std::ios::binary);
 	for (ClusterFragment frag : cluster_fragments) {
-		_tprintf_s(_T("Cluster: 0x%llX\tLCN: 0x%llX;\tLength(Bytes): %llX\t Offset: %llX\n"),
+		_tprintf_s(_T("Cluster: 0x%llX\tLCN: 0x%llX;\tLength(Bytes): 0x%llX\t Offset: 0x%llX\n"),
 			frag.fragmentLength,
 			frag.startClusterIndex,
 			frag.fragmentLength * bytes_per_cluster,
 			frag.startClusterIndex * bytes_per_cluster + retrieval_pointers_base * bytes_per_sector
 		);
+
+		LARGE_INTEGER offset{};
+		offset.QuadPart = frag.startClusterIndex * bytes_per_cluster + retrieval_pointers_base * bytes_per_sector;
+		BOOL result_SetFilePointerEx = SetFilePointerEx(
+			volume_handle,
+			offset,
+			NULL,
+			FILE_BEGIN
+		);
+		if (result_SetFilePointerEx == FALSE) {
+			_tprintf_s(_T("SetFilePointerEx Fail"));
+			return -1;
+		}
+
+		std::vector<unsigned char> readbuf = std::vector<unsigned char>(frag.fragmentLength * bytes_per_cluster);
+		DWORD bytes_read;
+		BOOL result_readfile = ReadFile(
+			volume_handle,
+			readbuf.data(),
+			readbuf.size(),
+			&bytes_read,
+			NULL
+		);
+		if (result_readfile == FALSE) {
+			DWORD err = GetLastError();
+			_tprintf_s(_T("ReadFile Fail %d\n"), err);
+		}
+
+		out_file.write((char *)readbuf.data(), std::min<LONGLONG>( readbuf.size(), clusterdistrib->file_size - bytes_written));
+		bytes_written+= readbuf.size();
+		/*for (int i = 0; i < readbuf.size() && bytes_written < clusterdistrib->file_size; i++,bytes_written++) {
+			_tprintf_s(_T("%02X "), readbuf[i]);
+			if (i % 16 == 15) {
+				putchar('\n');
+			}
+		}*/
+
 	}
+	CloseHandle(volume_handle);
+	out_file.close();
 
 
 
