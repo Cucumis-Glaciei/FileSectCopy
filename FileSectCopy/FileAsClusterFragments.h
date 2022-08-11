@@ -46,14 +46,14 @@ public:
 	/// </summary>
 	/// <param name="total_file_size"> Total size (bytes) for the file </param>
 	/// <param name="volume_device_path"> Device file path of the volume in which the file is contained </param>
-	FileAsClusterFragments(LONGLONG total_file_size, TCHAR* volume_device_path);
+	FileAsClusterFragments(LONGLONG total_file_size, CString volume_device_path);
 
 	/// <summary>
 	/// Extract the data of the file to another file: 
 	/// </summary>
 	/// <param name="out_file_path"> The file path to extract the data </param>
 	/// <returns> The size of the actually extracted data (bytes) </returns>
-	LONGLONG ExtractToFile(TCHAR* out_file_path);
+	LONGLONG ExtractToFile(CString out_file_path);
 
 	// Reserved
 	// std::vector<unsigned char> ExtractToMem();

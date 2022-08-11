@@ -4,6 +4,7 @@
 #include <Windows.h>
 #include "FileAsClusterFragments.h"
 #include <filesystem>
+#include <atlstr.h>
 
 /// <summary>
 /// <para> A class to obtain and parse the list of the clusters on the volume associated to a file </para>
@@ -63,7 +64,7 @@ public:
 	/// <para> A constructor with the file path pointing a target file </para>
 	/// <para> ファイルパス path で示されるファイルを対象としてコンストラクトする。 </para>
 	/// </summary>
-	FileClusterDistribution(TCHAR* path = nullptr);
+	FileClusterDistribution(CString path = "");
 
 	/// <summary>
 	/// <para> コンストラクト時に与えられたパスで記述されるファイルに対して、その論理ボリューム上でのクラスタ分布を取得する。 <para>

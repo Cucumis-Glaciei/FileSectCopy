@@ -77,3 +77,14 @@ fstreamを使用すると、なぜかseekgで失敗する。このため、SetFi
 https://docs.microsoft.com/ja-jp/windows/win32/api/fileapi/nf-fileapi-setfilepointerex?redirectedfrom=MSDN
 -> どうやらSetFilePointerEx, ReadFileを使用する場合も、ボリュームなどのデバイスファイルに対してはセクター境界に揃えないと失敗するらしい
 https://stackoverflow.com/questions/31697229/readfile-function-returns-error-invalid-parameter
+
+-----------------------------------------------
+LPWSTRなどをメモリ安全に扱う方法としてはCStringTクラスを利用するのが良いようだ。
+https://docs.microsoft.com/ja-jp/cpp/atl-mfc-shared/reference/cstringt-class?view=msvc-170
+(LPCTSTR), (LPTSTR)などへキャストすることで自動的にTCHAR*ポインタを作成してくれる。またFormatなどの便利な関数が付属している。
+
+-----------------------------------------------
+NTFSマウントポイントを適切に処理する方法としては、以下の2つのAPIを併用するのがよさそうだ：
+GetVolumePathNameW: https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getvolumepathnamew ファイルのパスをもとに、そのファイルが格納されているボリュームのマウントポイントをパス文字列として返してくれる。
+GetVolumeNameForVolumeMountPointW: https://docs.microsoft.com/ja-JP/windows/win32/api/fileapi/nf-fileapi-getvolumenameforvolumemountpointw ドライブレターまたはNTFSマウントポイントパスをもとに、ボリュームのGUIDを返してくれる。
+GUIDをもとに、ボリュームへの直接アクセスが可能になる。\\?\Volume{GUID} の形式でアクセスする。

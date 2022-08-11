@@ -1,6 +1,7 @@
 #include "FileAsClusterFragments.h"
 #include <Windows.h>
 #include <tchar.h>
+#include <atlstr.h>
 
 ClusterFragment::ClusterFragment(LONGLONG startClusterIndex = 0, LONGLONG fragmentLength = 0)
 {
@@ -8,21 +9,21 @@ ClusterFragment::ClusterFragment(LONGLONG startClusterIndex = 0, LONGLONG fragme
 	this->fragmentLength = fragmentLength;
 }
 
-FileAsClusterFragments::FileAsClusterFragments(LONGLONG total_file_size, TCHAR* volume_device_path)
+FileAsClusterFragments::FileAsClusterFragments(LONGLONG total_file_size, CString volume_device_path)
 {
 	this->totalFileSize = total_file_size;
-	this->volumeDevicePath = volume_device_path;
+	this->volumeDevicePath = (LPCTSTR) volume_device_path;
 
 }
 
-LONGLONG FileAsClusterFragments::ExtractToFile(TCHAR* out_file_path)
+LONGLONG FileAsClusterFragments::ExtractToFile(CString out_file_path)
 {
-	TCHAR volume_path[32];
-	_stprintf_s(volume_path, 32, _T("\\\\.\\%s:"), this->volumeDevicePath.c_str());
+	CString volume_path;
+	volume_path.Format(_T("\\\\.\\%s:"), this->volumeDevicePath.c_str());
 
 	// Get File Handle for the volume
 	HANDLE volume_handle = CreateFile(
-		_T("\\\\.\\X:"),
+		volume_path,
 		GENERIC_READ,
 		FILE_SHARE_READ | FILE_SHARE_WRITE,
 		NULL,

@@ -5,17 +5,18 @@
 #include <iostream>
 #include <filesystem>
 #include <tchar.h>
+#include <atlstr.h>
 #include <shlwapi.h>
 #pragma comment( lib, "Shlwapi.lib" ) 
 
-FileClusterDistribution::FileClusterDistribution(TCHAR* path) {
+FileClusterDistribution::FileClusterDistribution(CString path) {
 
-	if (path == nullptr) {
-		throw std::runtime_error("[FileClusterDistribution] Target file path is null pointer.");
+	if (path == "") {
+		throw std::runtime_error("[FileClusterDistribution] Target file path is empty.");
 	}
 
 	// std::filesystem::path could be made from TCHAR[]
-	file_path = path;
+	file_path = (LPCTSTR)path;
 
 	// Get File Handle for the path
 	HANDLE file_handle = CreateFile(
