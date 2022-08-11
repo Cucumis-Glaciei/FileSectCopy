@@ -1,6 +1,7 @@
 #pragma once
 #include <Windows.h>
 #include <filesystem>
+#include <atlstr.h>
 
 /// <summary>
 /// A structure to describe the location of file fragments on a volume, with the starting offsets of the continuous logical clusters and their quantity
@@ -13,7 +14,7 @@ public:
 	/// <summary>
 	/// ファイル断片の開始点のボリューム上でのオフセット(クラスタ数)
 	/// </summary>
-	LONGLONG startClusterIndex;
+	LONGLONG startOffset;
 	/// <summary>
 	/// ファイル断片の長さ
 	/// </summary>
@@ -33,7 +34,7 @@ private:
 	/// <summary>
 	/// The volume device path containing the cluster fragments: e.g. "\\.\C:" "\\?\Harddisk0Partition2"
 	/// </summary>
-	std::filesystem::path volumeDevicePath;
+	CString volume_device_path_str;
 
 public:
 	/// <summary>
@@ -46,7 +47,7 @@ public:
 	/// </summary>
 	/// <param name="total_file_size"> Total size (bytes) for the file </param>
 	/// <param name="volume_device_path"> Device file path of the volume in which the file is contained </param>
-	FileAsClusterFragments(LONGLONG total_file_size, CString volume_device_path);
+	FileAsClusterFragments(LONGLONG total_file_size, CString volume_device_path, std::vector<ClusterFragment> cluster_fragments);
 
 	/// <summary>
 	/// Extract the data of the file to another file: 

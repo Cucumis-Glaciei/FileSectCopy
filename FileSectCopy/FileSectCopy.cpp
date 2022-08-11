@@ -33,83 +33,18 @@ int _tmain(int argc, TCHAR** argv)
 		return -1;
 	}
 
-	_putts(_T("-------------------------------------------"));
-	CString volume_path_str;
-	volume_path_str.Format(_T("\\\\.\\%c:"), clusterdistrib->getDriveLetter());
-
-	// Get File Handle for the volume
-	HANDLE volume_handle = CreateFile(
-		(LPCTSTR) volume_path_str,
-		GENERIC_READ,
-		FILE_SHARE_READ | FILE_SHARE_WRITE,
-		NULL,
-		OPEN_EXISTING,
-		FILE_ATTRIBUTE_NORMAL,
-		NULL
-	);
-
-	if (volume_handle == INVALID_HANDLE_VALUE) {
-		DWORD err = GetLastError();
-		_tprintf_s(_T("Failed to obtain volume handle: %s; Err code %d\n"), (LPCTSTR)volume_path_str, err);
+	LONGLONG bytes_written = 0;
+	try {
+		FileAsClusterFragments file_extractor = clusterdistrib->getDistribution();
+		bytes_written = file_extractor.ExtractToFile(argv[2]);
+	}
+	catch (std::exception e) {
+		std::cout << e.what() << std::endl;
 		return -1;
 	}
-
-	std::vector<ClusterFragment> cluster_fragments = clusterdistrib->getDistribution();
-	int bytes_per_cluster = clusterdistrib->bytes_per_cluster;
-	int bytes_per_sector = clusterdistrib->bytes_per_sector;
-	LONGLONG retrieval_pointers_base = clusterdistrib->getRetrievalPointerBase();
-
-	int bytes_written = 0;
-	std::ofstream out_file(argv[2], std::ios::binary);
-	for (ClusterFragment frag : cluster_fragments) {
-		_tprintf_s(_T("Cluster: 0x%llX\tLCN: 0x%llX;\tLength(Bytes): 0x%llX\t Offset: 0x%llX\n"),
-			frag.fragmentLength,
-			frag.startClusterIndex,
-			frag.fragmentLength * bytes_per_cluster,
-			frag.startClusterIndex * bytes_per_cluster + retrieval_pointers_base * bytes_per_sector
-		);
-
-		LARGE_INTEGER offset{};
-		offset.QuadPart = frag.startClusterIndex * bytes_per_cluster + retrieval_pointers_base * bytes_per_sector;
-		BOOL result_SetFilePointerEx = SetFilePointerEx(
-			volume_handle,
-			offset,
-			NULL,
-			FILE_BEGIN
-		);
-		if (result_SetFilePointerEx == FALSE) {
-			_tprintf_s(_T("SetFilePointerEx Fail"));
-			return -1;
-		}
-
-		std::vector<unsigned char> readbuf = std::vector<unsigned char>(frag.fragmentLength * bytes_per_cluster);
-		DWORD bytes_read;
-		BOOL result_readfile = ReadFile(
-			volume_handle,
-			readbuf.data(),
-			readbuf.size(),
-			&bytes_read,
-			NULL
-		);
-		if (result_readfile == FALSE) {
-			DWORD err = GetLastError();
-			_tprintf_s(_T("ReadFile Fail %d\n"), err);
-		}
-
-		out_file.write((char *)readbuf.data(), std::min<LONGLONG>( readbuf.size(), clusterdistrib->file_size - bytes_written));
-		bytes_written+= readbuf.size();
-		/*for (int i = 0; i < readbuf.size() && bytes_written < clusterdistrib->file_size; i++,bytes_written++) {
-			_tprintf_s(_T("%02X "), readbuf[i]);
-			if (i % 16 == 15) {
-				putchar('\n');
-			}
-		}*/
-
-	}
-	CloseHandle(volume_handle);
-	out_file.close();
-
 	delete clusterdistrib;
+
+	_tprintf_s(_T("Extraction of file %s to %s completed.\n"), argv[1], argv[2]);
 	return 0;
 }
 // プログラムの実行: Ctrl + F5 または [デバッグ] > [デバッグなしで開始] メニュー

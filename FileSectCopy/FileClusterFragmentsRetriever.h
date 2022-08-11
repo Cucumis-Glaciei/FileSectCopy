@@ -13,51 +13,31 @@
 class FileClusterDistribution
 {
 private:
+	class VolumeClusterInfo
+	{
+	private:
+		CString file_path_str_;
+		LONGLONG bytes_per_cluster_;
+		LONGLONG bytes_per_sector_;
+		LONGLONG retrieval_pointers_offset_;
+	public:
+		CString volume_device_path_str_;
+		VolumeClusterInfo(CString file_path_str = "");
+		LONGLONG GetBytesPerCluster() { return bytes_per_cluster_; };
+		LONGLONG GetBytesPerSector() { return bytes_per_sector_; };
+		LONGLONG GetRetrievalPointersOffset() { return retrieval_pointers_offset_; };
+
+	};
+
 	const int InitialPointersBufferSize = 8192;
 
 	std::filesystem::path file_path;
-	TCHAR file_driveletter;
-	//	HANDLE file_handle;
 	std::vector<unsigned char> retrieval_pointers;
-	long retrieval_pointers_base = 0;
-
-	//class RetrievalPointerBase
-	//{
-	//public:
-	//	RetrievalPointerBase();
-	//};
-
-	//class DriveInfo 
-	//{
-	//public:
-	//	DriveInfo();
-	//};
-	/// <summary>
-	/// <para> A method to obtain the result of the RETRIEVAL_POINTERS_BUFFER type, calling the DeviceIoControl API with the FSCTL_GET_RETRIEVAL_POINTERS control code </para>
-	/// <para> FSCTL_GET_RETRIEVAL_POINTERS 制御コード で DeviceIoControl API を呼び出し、RETRIEVAL_POINTERS_BUFFER 型の結果を取得する。 </para>
-	/// </summary>
-	/// <returns></returns>
-	RETRIEVAL_POINTERS_BUFFER getRetrievalPointers();
-
-	/// <summary>
-/// <para> A method to obtain the cluster size of the volume containing the file. </para>
-/// <para> ファイルが格納されているボリュームのクラスタサイズを取得する。 </para>
-/// </summary>
-/// <returns></returns>
-	void getBytesPerCluster();
+	VolumeClusterInfo* volume_cluster_info_;
 
 public:
-	int bytes_per_cluster = 0;
-	int bytes_per_sector = 0;
 	LONGLONG file_size = 0;
 
-	/// <summary>
-	/// <para> A method to obtain the sector number used as the starting point of the logical cluster number, calling the DeviceIoControl API with the FSCTL_GET_RETRIEVAL_POINTER_BASE control code. </para>
-	/// <para> That is, if the logical cluster number (LCN) in the result of FSCTL_GET_RETRIEVAL_POINTERS is zero, that file fragment starts from this sector. </para>
-	/// FSCTL_GET_RETRIEVAL_POINTER_BASE でDeviceIoControl API を呼び出し、ロジカルクラスタ番号のオフセットとなるセクタ番号を取得する。 
-	/// </summary>
-	/// <returns></returns>
-	LONGLONG getRetrievalPointerBase();
 
 
 	/// <summary>
@@ -72,12 +52,7 @@ public:
 	/// <returns>
 	/// ClusterFlagment構造体のベクターで記述された、ファイルのクラスタ分布
 	/// </returns>
-	std::vector<ClusterFragment> getDistribution();
+	FileAsClusterFragments getDistribution();
 
-	/// <summary>
-	/// <para> コンストラクト時に与えられたパスで記述されるファイルに対して、そのドライブレターを取得する。 </para>
-	/// </summary>
-	/// <returns></returns>
-	TCHAR getDriveLetter();
 };
 
