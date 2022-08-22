@@ -15,16 +15,16 @@ FileClusterDistribution::FileClusterDistribution(CString path) {
 		throw std::runtime_error("[FileClusterDistribution] Target file path is empty.");
 	}
 
-	_tprintf_s(_T("[FileClusterDistribution] Target File: %s\n"),  path.GetBuffer());
+	_tprintf_s(_T("[FileClusterDistribution] Target File: %s\n"), path.GetBuffer());
 	// std::filesystem::path could be made from TCHAR[]
 	file_path = (LPCTSTR)path;
 
-	this->volume_cluster_info_ = new VolumeClusterInfo(path);
+	this->volume_cluster_info_ = new VolumeClusterInfo(path); // Extract information of the volume containing the file specified by the path
 
 	// Get File Handle for the path
 	HANDLE file_handle = CreateFile(
 		path,
-		0x00,
+		0x00, // No access is required to call FSCTL_GET_RETRIEVAL_POINTERS
 		FILE_SHARE_READ,
 		NULL,
 		OPEN_EXISTING,
@@ -35,23 +35,22 @@ FileClusterDistribution::FileClusterDistribution(CString path) {
 	if (file_handle == INVALID_HANDLE_VALUE) {
 		throw std::runtime_error("Failed to obtain file handle of " + file_path.string());
 	}
-	else {
-		std::cout << "[FileClusterDistribution] Obtained file handle of " << file_path << ": " << file_handle << std::endl;
-	}
+	std::cout << "[FileClusterDistribution] Obtained file handle of " << file_path << ": " << file_handle << std::endl;
 
 
 	// Input buffer for FSCTL_GET_RETRIEVAL_POINTERS is starting virtual cluster number described by STARTING_VCN_INPUT_BUFFER structure
 	STARTING_VCN_INPUT_BUFFER vcn_input{};
 	vcn_input.StartingVcn.QuadPart = 0;
 
-	retrieval_pointers = std::vector<unsigned char>(InitialPointersBufferSize);
+	retrieval_pointers = std::vector<unsigned char>(InitialPointersBufferSize);	// output buffer for DeviceIoControl
 
 	DWORD bytes_returned = 0;
-	DWORD errorcode = 0;
 	BOOL status_deviceiocontrol = FALSE;
 
 	// Call DeviceIoControl with FSCTL_GET_RETRIEVAL_POINTERS control code
 	do {
+		DWORD error_code = 0; // result of GetLastError
+
 		status_deviceiocontrol = DeviceIoControl(
 			file_handle,
 			FSCTL_GET_RETRIEVAL_POINTERS,
@@ -63,26 +62,22 @@ FileClusterDistribution::FileClusterDistribution(CString path) {
 			NULL
 		);
 		// DeviceIoControl Does NOT return error code
-		errorcode = GetLastError();
-		// ERROR_MORE_DATA will be set if the target file is extremely fragmented & thus could not be fit to the output buffer
-		if (errorcode == ERROR_MORE_DATA || errorcode == ERROR_INSUFFICIENT_BUFFER) {
+		error_code = GetLastError();
+		// ERROR_MORE_DATA will be set if the target file is extremely fragmented & the information of retrieval pointers could not fit to the output buffer
+		if (error_code == ERROR_MORE_DATA || error_code == ERROR_INSUFFICIENT_BUFFER) {
 			// retry calling DeviceIoControl with doubled output buffer size
 			retrieval_pointers.resize(retrieval_pointers.size() * 2);
 		}
-		else if (errorcode != NO_ERROR) {
-			throw std::runtime_error("[FileClusterDistribution] FSCTL_GET_RETRIEVAL_POINTERS failed with error code: " + errorcode);
+		else if (error_code != NO_ERROR) {	// Other errors could not be handled 
+			throw std::runtime_error("[FileClusterDistribution] FSCTL_GET_RETRIEVAL_POINTERS failed with error code: " + error_code);
 		}
 		std::cout << "Returned bytes of FSCTL_GET_RETRIEVAL_POINTERS: " << bytes_returned << std::endl;
 		std::cout << "Status of FSCTL_GET_RETRIEVAL_POINTERS: " << status_deviceiocontrol << std::endl;
-		std::cout << "Error Code of FSCTL_GET_RETRIEVAL_POINTERS: " << errorcode << std::endl;
+		std::cout << "Error Code of FSCTL_GET_RETRIEVAL_POINTERS: " << error_code << std::endl;
 	} while (status_deviceiocontrol != TRUE); // Return value TRUE indicates the success of the DeviceIoControl API
 
-	for (unsigned int i = 0; i < bytes_returned; i++) {
-		printf_s("%02X ", retrieval_pointers[i]);
-	}
-	putchar('\n');
 
-	// casting char vector into RETRIEVAL_POINTERS_BUFFER
+	// casting the buffer from char vector into RETRIEVAL_POINTERS_BUFFER
 	RETRIEVAL_POINTERS_BUFFER* retbuf = (RETRIEVAL_POINTERS_BUFFER*)retrieval_pointers.data();
 
 	// Parse the RETRIEVAL_POINTERS_BUFFER structure
@@ -97,8 +92,13 @@ FileClusterDistribution::FileClusterDistribution(CString path) {
 	if (result_getFileSizeEx != FALSE) {
 		file_size = fileSize->QuadPart;
 		_tprintf_s(_T("File Size: %lld\n"), file_size);
+		delete fileSize;
 	}
-	delete fileSize;
+	else {
+		delete fileSize;
+		throw std::runtime_error("[FileClusterDistribution] Could not obtain the size of the file: " + file_path.string());
+	}
+
 	// File handle must be closed after use
 	CloseHandle(file_handle);
 
@@ -111,15 +111,17 @@ FileAsClusterFragments FileClusterDistribution::getDistribution()
 	LONGLONG prev_start_vcn = 0;
 
 	for (unsigned int i = 0; i < retbuf->ExtentCount; i++) {
-		LONGLONG fragment_length = retbuf->Extents[i].NextVcn.QuadPart - prev_start_vcn;
-		prev_start_vcn = retbuf->Extents[i].NextVcn.QuadPart;
+		LONGLONG fragment_length = retbuf->Extents[i].NextVcn.QuadPart - prev_start_vcn; // Length of the fragment (clusters)
+		prev_start_vcn = retbuf->Extents[i].NextVcn.QuadPart;	// Update the previous member of the Extents[]
+
 		cluster_fragment.push_back(
 			ClusterFragment(
 				(retbuf->Extents[i].Lcn.QuadPart * this->volume_cluster_info_->GetBytesPerCluster()) + this->volume_cluster_info_->GetRetrievalPointersOffset(),
 				fragment_length * (this->volume_cluster_info_->GetBytesPerCluster())
 			)
-		);
+		);		// Add cluster_fragment object
 	}
+
 	FileAsClusterFragments file_cluster_fragments = FileAsClusterFragments(
 		this->file_size,
 		this->volume_cluster_info_->volume_device_path_str_,
