@@ -22,6 +22,12 @@ LONGLONG FileAsClusterFragments::ExtractToFile(CString out_file_path)
 {
 	_putts(_T("-------------------------------------------"));
 
+	LONGLONG bytes_written = 0;		// written data size to the out_file_path
+	std::ofstream out_file(out_file_path, std::ios::binary);	// file stream for data output
+	if (!out_file) {
+		throw std::runtime_error("[FileAsClusterFragments] Could not open the destination file to write the data.");
+	}
+
 	// Get File Handle of the volume containing the cluster fragments
 	HANDLE volume_handle = CreateFile(
 		(LPCTSTR)this->volume_device_path_str,
@@ -38,9 +44,6 @@ LONGLONG FileAsClusterFragments::ExtractToFile(CString out_file_path)
 		_tprintf_s(_T("[FileAsClusterFragments] Failed to obtain volume handle: %s; Err code %d\n"), (LPCTSTR)volume_device_path_str, err);
 		throw std::runtime_error("[FileAsClusterFragments] Failed to obtain the volume handle.");
 	}
-
-	LONGLONG bytes_written = 0;		// written data size to the out_file_path
-	std::ofstream out_file(out_file_path, std::ios::binary);	// file stream for data output
 
 	for (ClusterFragment frag : cluster_fragments) {	// Loop for each cluster fragment in order to copy the data to file
 		_tprintf_s(_T("[FileAsClusterFragments] Length(Bytes): 0x%llX\t Offset: 0x%llX\n"),

@@ -12,10 +12,10 @@
 FileClusterDistribution::FileClusterDistribution(CString path) {
 
 	if (path == "") {
-		throw std::runtime_error("[FileClusterDistribution] Target file path is empty.");
+		throw std::runtime_error("[FileClusterDistribution] Source file path is empty.");
 	}
 
-	_tprintf_s(_T("[FileClusterDistribution] Target File: %s\n"), path.GetBuffer());
+	_tprintf_s(_T("[FileClusterDistribution] Source File: %s\n"), path.GetBuffer());
 	// std::filesystem::path could be made from TCHAR[]
 	file_path = (LPCTSTR)path;
 
@@ -63,7 +63,7 @@ FileClusterDistribution::FileClusterDistribution(CString path) {
 		);
 		// DeviceIoControl Does NOT return error code
 		error_code = GetLastError();
-		// ERROR_MORE_DATA will be set if the target file is extremely fragmented & the information of retrieval pointers could not fit to the output buffer
+		// ERROR_MORE_DATA will be set if the source file is extremely fragmented & the information of retrieval pointers could not fit to the output buffer
 		if (error_code == ERROR_MORE_DATA || error_code == ERROR_INSUFFICIENT_BUFFER) {
 			// retry calling DeviceIoControl with doubled output buffer size
 			retrieval_pointers.resize(retrieval_pointers.size() * 2);
@@ -140,8 +140,8 @@ FileClusterDistribution::VolumeClusterInfo::VolumeClusterInfo(CString file_path_
 
 	// Check if the path has a correct drive letter
 	if (!std::isalpha(driveletter)) {
-		_tprintf_s(_T("[VolumeClusterInfo] Target File: %s does not have Drive Letter\n"), file_path_str.GetBuffer());
-		throw std::runtime_error("[VolumeClusterInfo] Target File is located at volume without drive letter.");
+		_tprintf_s(_T("[VolumeClusterInfo] The path of source file: %s does not have Drive Letter\n"), file_path_str.GetBuffer());
+		throw std::runtime_error("[VolumeClusterInfo] Source file is located at volume without drive letter.");
 	}
 
 	_tprintf_s(_T("Drive Letter: %c\n"), driveletter);
