@@ -11,15 +11,14 @@ Fortunately, this mutex mechanism could be bypassed if you access the volume dev
 ## Usage
 
 ``` Shell
-FileSectCopy.exe infile outfile
+FileSectCopy.exe sourcefile destinationfile
 ```
 
 - In most cases, the extraction from local drives requires the administrator privileges. It is recommended to run this program on an escalated command prompt or PowerShell.
 - In order to prevent overwriting important files with administrator privileges, the program will not write any data to 'outfile,' if 'outfile' already exists.
 - Supported file systems are the followings: NTFS, FAT12, FAT16, FAT32 and exFAT.
 
-## Known Issues
+## Remarks
 
-- Compressed or encrypted files with NTFS features could not be extracted correctly.
-- If a volume is mounted to an empty directory on another NTFS volume, files in that volume could not be extracted correctly.
-- Files on network drives may not be extracted correctly.
+- Compressed or encrypted files with NTFS features could not be extracted.
+- Files on network drives may not be extracted.
