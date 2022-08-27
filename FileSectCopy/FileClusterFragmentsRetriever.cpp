@@ -134,9 +134,9 @@ FileClusterDistribution::VolumeClusterInfo::VolumeClusterInfo(CString file_path_
 {
 	this->file_path_str_ = file_path_str;
 	// Obtain the volume device file related to the file specified by "file_path_str"
-	CString volume_mount_point = CString("\0", MAX_PATH + 1);
+	CString volume_mount_point = CString('\0', MAX_PATH + 1);
 	LPTSTR volume_mount_point_buf = volume_mount_point.GetBuffer();
-	this->volume_device_path_str_ = CString("\0", MAX_PATH + 1);
+	this->volume_device_path_str_ = CString('\0', MAX_PATH + 1);
 	LPTSTR volume_device_path_str_buffer = volume_device_path_str_.GetBuffer();
 
 	if (GetVolumePathName(
