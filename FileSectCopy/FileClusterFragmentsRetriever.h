@@ -3,7 +3,6 @@
 #include <vector>
 #include <Windows.h>
 #include "FileAsClusterFragments.h"
-#include <filesystem>
 #include <atlstr.h>
 
 /// <summary>
@@ -46,7 +45,7 @@ private:
 	const int InitialPointersBufferSize = 8192;
 
 	/// <summary> The file path to extract the data directly from the volume </summary>
-	std::filesystem::path file_path;
+	CString file_path;
 	/// <summary> the buffer for the FSCTL_GET_RETRIEVAL_POINTERS </summary>
 	std::vector<unsigned char> retrieval_pointers;
 	/// <summary> The information of the volume about the clusters </summary>

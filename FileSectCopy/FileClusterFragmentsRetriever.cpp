@@ -3,7 +3,6 @@
 #include <string>
 #include <Windows.h>
 #include <iostream>
-#include <filesystem>
 #include <tchar.h>
 #include <atlstr.h>
 #include <shlwapi.h>
@@ -16,8 +15,8 @@ FileClusterDistribution::FileClusterDistribution(CString path) {
 	}
 
 	_tprintf_s(_T("[FileClusterDistribution] Source File: %s\n"), path.GetBuffer());
-	// std::filesystem::path could be made from TCHAR[]
-	file_path = (LPCTSTR)path;
+	// copy the path of the source file 
+	file_path = path;
 
 	this->volume_cluster_info_ = new VolumeClusterInfo(path); // Extract information of the volume containing the file specified by the path
 
@@ -33,9 +32,9 @@ FileClusterDistribution::FileClusterDistribution(CString path) {
 	);
 
 	if (file_handle == INVALID_HANDLE_VALUE) {
-		throw std::runtime_error("Failed to obtain file handle of " + file_path.string());
+		throw std::runtime_error("Failed to obtain the source file handle.");
 	}
-	std::cout << "[FileClusterDistribution] Obtained file handle of " << file_path << ": " << file_handle << std::endl;
+	_tprintf_s(_T("[FileClusterDistribution] Obtained file handle of %s: %p\n"), (LPCTSTR)file_path, file_handle);
 
 
 	// Input buffer for FSCTL_GET_RETRIEVAL_POINTERS is starting virtual cluster number described by STARTING_VCN_INPUT_BUFFER structure
@@ -96,7 +95,7 @@ FileClusterDistribution::FileClusterDistribution(CString path) {
 	}
 	else {
 		delete fileSize;
-		throw std::runtime_error("[FileClusterDistribution] Could not obtain the size of the file: " + file_path.string());
+		throw std::runtime_error("[FileClusterDistribution] Could not obtain the size of the source file.");
 	}
 
 	// File handle must be closed after use

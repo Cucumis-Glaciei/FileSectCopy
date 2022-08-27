@@ -5,7 +5,6 @@
 #include <fstream>
 #include <Windows.h>
 #include <vector>
-#include <filesystem>
 #include <locale>
 #include <tchar.h>
 #include <atlstr.h>
@@ -29,8 +28,8 @@ int _tmain(int argc, TCHAR** argv)
 		_tprintf(_T("[FileClusterDistribution] The Source file is compressed or encrypted with NTFS features. Extraction of Files with such attributes is currently disabled."));
 		return -1;
 	}
-
-	if (std::filesystem::exists(argv[2])) { // Overwrite protection
+	
+	if (PathFileExists(argv[2])) { // Overwrite protection
 		_tprintf(_T("Destinationfile: %s already exists\n"), argv[2]);
 		return -1;
 	}
