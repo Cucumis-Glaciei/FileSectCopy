@@ -68,6 +68,7 @@ FileClusterDistribution::FileClusterDistribution(CString path) {
 			retrieval_pointers.resize(retrieval_pointers.size() * 2);
 		}
 		else if (error_code != NO_ERROR) {	// Other errors could not be handled 
+			CloseHandle(file_handle);
 			throw std::runtime_error("[FileClusterDistribution] FSCTL_GET_RETRIEVAL_POINTERS failed with error code: " + error_code);
 		}
 		std::cout << "Returned bytes of FSCTL_GET_RETRIEVAL_POINTERS: " << bytes_returned << std::endl;
@@ -86,15 +87,14 @@ FileClusterDistribution::FileClusterDistribution(CString path) {
 	}
 
 	// Obtain file size
-	LARGE_INTEGER* fileSize = new LARGE_INTEGER();
-	BOOL result_getFileSizeEx = GetFileSizeEx(file_handle, fileSize);
+	LARGE_INTEGER fileSize = LARGE_INTEGER();
+	BOOL result_getFileSizeEx = GetFileSizeEx(file_handle, &fileSize);
 	if (result_getFileSizeEx != FALSE) {
-		file_size = fileSize->QuadPart;
+		file_size = fileSize.QuadPart;
 		_tprintf_s(_T("File Size: %lld\n"), file_size);
-		delete fileSize;
 	}
 	else {
-		delete fileSize;
+		CloseHandle(file_handle);
 		throw std::runtime_error("[FileClusterDistribution] Could not obtain the size of the source file.");
 	}
 
@@ -134,12 +134,12 @@ FileClusterDistribution::VolumeClusterInfo::VolumeClusterInfo(CString file_path_
 {
 	this->file_path_str_ = file_path_str;
 	// Obtain the volume device file related to the file specified by "file_path_str"
-	CString volume_mount_point = CString('\0', MAX_PATH + 1);
+	CString volume_mount_point    = CString('\0', MAX_PATH + 1);
 	LPTSTR volume_mount_point_buf = volume_mount_point.GetBuffer();
 	this->volume_device_path_str_ = CString('\0', MAX_PATH + 1);
 	LPTSTR volume_device_path_str_buffer = volume_device_path_str_.GetBuffer();
 
-	if (GetVolumePathName(
+	if (GetVolumePathName( // Get the NTFS mount point from the source file path
 			(LPCTSTR)file_path_str, 
 			volume_mount_point_buf, 
 			volume_mount_point.GetLength()) == FALSE) {
@@ -148,30 +148,30 @@ FileClusterDistribution::VolumeClusterInfo::VolumeClusterInfo(CString file_path_
 	}
 	volume_mount_point.ReleaseBuffer();
 
-	if (GetVolumeNameForVolumeMountPoint(
-		(LPCTSTR)volume_mount_point,
-		volume_device_path_str_buffer,
-		volume_device_path_str_.GetLength()) == FALSE) {
-		volume_device_path_str_.ReleaseBuffer();
+	if (GetVolumeNameForVolumeMountPoint( // Get volume device file with GUID from a NTFS mount point
+			(LPCTSTR)volume_mount_point,
+			volume_device_path_str_buffer,
+			this->volume_device_path_str_.GetLength()) == FALSE) {
+		this->volume_device_path_str_.ReleaseBuffer();
 		throw std::runtime_error("[VolumeClusterInfo] Could not obtain the device file of the volume containing the source file");
 	}
-	volume_device_path_str_.ReleaseBuffer();
-	volume_device_path_str_.Delete(volume_device_path_str_.GetLength() - 1, 1); // Remove trailing backslash
+	this->volume_device_path_str_.ReleaseBuffer();
+	this->volume_device_path_str_.Delete(this->volume_device_path_str_.GetLength() - 1, 1); // Remove trailing backslash
 	
-	_tprintf_s(_T("[VolumeClusterInfo] Volume device path: %s\n"), (LPCTSTR)volume_device_path_str_);
+	_tprintf_s(_T("[VolumeClusterInfo] Volume device path: %s\n"), (LPCTSTR)this->volume_device_path_str_);
 
 	// Obtain cluster & sector size for the volume
 	DWORD sectors_per_cluster = 0;
-	DWORD bytes_per_sector = 0;
-	DWORD num_free_clusters = 0; // Not used
-	DWORD num_of_clusters = 0;  // Not used
+	DWORD bytes_per_sector    = 0;
+	DWORD num_free_clusters   = 0; // Not used
+	DWORD num_of_clusters	  = 0; // Not used
 
 	BOOL diskFreeSpace_result = GetDiskFreeSpace(
-		volume_device_path_str_ + "\\", // This API needs trailing backslash for the directory path
+		this->volume_device_path_str_ + "\\", // This API needs trailing backslash for the directory path
 		&sectors_per_cluster,
 		&bytes_per_sector,
 		&num_free_clusters, // Not used but could not be omitted
-		&num_of_clusters   // ditto
+		&num_of_clusters    // ditto
 	);
 	if (diskFreeSpace_result == TRUE) {
 		_tprintf_s(_T("[VolumeClusterInfo] Status of GetDiskFreeSpace: %d, Sectors / Cluster: %d, Bytes / Sector: %d, Number of free clusters: %d, Total number of clusters: %d\n"), diskFreeSpace_result, sectors_per_cluster, bytes_per_sector, num_free_clusters, num_of_clusters);
@@ -187,7 +187,7 @@ FileClusterDistribution::VolumeClusterInfo::VolumeClusterInfo(CString file_path_
 	// Obtain RetrievalPointerBase
 	// Get File Handle for the volume device file
 	HANDLE volume_handle = CreateFile(
-		volume_device_path_str_,
+		this->volume_device_path_str_,
 		GENERIC_READ,
 		FILE_SHARE_READ | FILE_SHARE_WRITE,
 		NULL,
@@ -197,6 +197,7 @@ FileClusterDistribution::VolumeClusterInfo::VolumeClusterInfo(CString file_path_
 	);
 
 	if (volume_handle == INVALID_HANDLE_VALUE) {
+		CloseHandle(volume_handle);
 		throw std::runtime_error("[VolumeClusterInfo] CreateFile for volume device file failed.");
 	}
 	_tprintf_s(_T("[VolumeClusterInfo] Obtained Volume Handle: 0x%llX\n"), (long long)volume_handle);
@@ -219,6 +220,10 @@ FileClusterDistribution::VolumeClusterInfo::VolumeClusterInfo(CString file_path_
 		returned_bytes,
 		retrieval_pointer_base.QuadPart
 	);
+	if (status_deviceiocontrol == FALSE) {
+		CloseHandle(volume_handle);
+		throw std::runtime_error("[VolumeClusterInfo] Failed to call DeviceIoControl with FSCTL_GET_RETRIEVAL_POINTER_BASE.");
+	}
 
 	CloseHandle(volume_handle);
 

@@ -41,15 +41,13 @@ LONGLONG FileAsClusterFragments::ExtractToFile(CString out_file_path)
 
 	if (volume_handle == INVALID_HANDLE_VALUE) {
 		DWORD err = GetLastError();
+		out_file.close();
 		_tprintf_s(_T("[FileAsClusterFragments] Failed to obtain volume handle: %s; Err code %d\n"), (LPCTSTR)volume_device_path_str, err);
 		throw std::runtime_error("[FileAsClusterFragments] Failed to obtain the volume handle.");
 	}
 
 	for (ClusterFragment frag : cluster_fragments) {	// Loop for each cluster fragment in order to copy the data to file
-		_tprintf_s(_T("[FileAsClusterFragments] Length(Bytes): 0x%llX\t Offset: 0x%llX\n"),
-			frag.fragmentLength,
-			frag.startOffset
-		);
+		_tprintf_s(_T("[FileAsClusterFragments] Length(Bytes): 0x%llX\t Offset: 0x%llX\n"), frag.fragmentLength, frag.startOffset);
 
 		LARGE_INTEGER offset{};		// SetFilePointerEx does not accept LONGLONG but LARGE_INTEGER union
 		offset.QuadPart = frag.startOffset;
@@ -60,7 +58,8 @@ LONGLONG FileAsClusterFragments::ExtractToFile(CString out_file_path)
 			FILE_BEGIN
 		);
 		if (result_SetFilePointerEx == FALSE) {
-			_tprintf_s(_T("[FileAsClusterFragments] SetFilePointerEx Fail"));
+			CloseHandle(volume_handle);
+			out_file.close();
 			throw std::runtime_error("[FileAsClusterFragments] SetFilePointerEx Fail");
 		}
 
@@ -75,6 +74,8 @@ LONGLONG FileAsClusterFragments::ExtractToFile(CString out_file_path)
 		);
 		if (result_readfile == FALSE) {
 			DWORD err = GetLastError();
+			CloseHandle(volume_handle);
+			out_file.close();
 			_tprintf_s(_T("[FileAsClusterFragments] ReadFile Fail %d\n"), err);
 			throw std::runtime_error("[FileAsClusterFragments] ReadFile Fail ");
 		}
@@ -83,7 +84,6 @@ LONGLONG FileAsClusterFragments::ExtractToFile(CString out_file_path)
 		LONGLONG write_length = readbuf.size() < (totalFileSize - bytes_written) ? readbuf.size() : (totalFileSize - bytes_written);
 		out_file.write((char*)readbuf.data(), write_length);
 		bytes_written += write_length;
-
 	}
 
 	// Close dynamic resources
