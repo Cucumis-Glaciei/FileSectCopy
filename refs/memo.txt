@@ -82,6 +82,9 @@ https://stackoverflow.com/questions/31697229/readfile-function-returns-error-inv
 LPWSTRなどをメモリ安全に扱う方法としてはCStringTクラスを利用するのが良いようだ。
 https://docs.microsoft.com/ja-jp/cpp/atl-mfc-shared/reference/cstringt-class?view=msvc-170
 (LPCTSTR), (LPTSTR)などへキャストすることで自動的にTCHAR*ポインタを作成してくれる。またFormatなどの便利な関数が付属している。
+変更される文字列ポインタとして渡す場合はGetBuffer()で一時的なバッファを用意してそのポインタを渡し、処理終了後にReleaseBuffer()で本体に反映させる必要がある。
+http://e-s-s.jp/programlibrary/cstring%E2%87%92lptstr%E5%A4%89%E6%8F%9B/
+
 
 -----------------------------------------------
 NTFSマウントポイントを適切に処理する方法としては、以下の2つのAPIを併用するのがよさそうだ：

@@ -134,18 +134,31 @@ FileClusterDistribution::VolumeClusterInfo::VolumeClusterInfo(CString file_path_
 {
 	this->file_path_str_ = file_path_str;
 	// Obtain the volume device file related to the file specified by "file_path_str"
-	int drive_num = PathGetDriveNumber(file_path_str_);
-	TCHAR driveletter = drive_num == -1 ? ' ' : (TCHAR)('A' + drive_num);
+	CString volume_mount_point = CString("\0", MAX_PATH + 1);
+	LPTSTR volume_mount_point_buf = volume_mount_point.GetBuffer();
+	this->volume_device_path_str_ = CString("\0", MAX_PATH + 1);
+	LPTSTR volume_device_path_str_buffer = volume_device_path_str_.GetBuffer();
 
-	// Check if the path has a correct drive letter
-	if (!std::isalpha(driveletter)) {
-		_tprintf_s(_T("[VolumeClusterInfo] The path of source file: %s does not have Drive Letter\n"), file_path_str.GetBuffer());
-		throw std::runtime_error("[VolumeClusterInfo] Source file is located at volume without drive letter.");
+	if (GetVolumePathName(
+			(LPCTSTR)file_path_str, 
+			volume_mount_point_buf, 
+			volume_mount_point.GetLength()) == FALSE) {
+		volume_mount_point.ReleaseBuffer();
+		throw std::runtime_error("[VolumeClusterInfo] Could not obtain the mount point of the volume containing the source file");
 	}
+	volume_mount_point.ReleaseBuffer();
 
-	_tprintf_s(_T("Drive Letter: %c\n"), driveletter);
-
-	this->volume_device_path_str_.Format(_T("\\\\.\\%c:"), driveletter);
+	if (GetVolumeNameForVolumeMountPoint(
+		(LPCTSTR)volume_mount_point,
+		volume_device_path_str_buffer,
+		volume_device_path_str_.GetLength()) == FALSE) {
+		volume_device_path_str_.ReleaseBuffer();
+		throw std::runtime_error("[VolumeClusterInfo] Could not obtain the device file of the volume containing the source file");
+	}
+	volume_device_path_str_.ReleaseBuffer();
+	volume_device_path_str_.Delete(volume_device_path_str_.GetLength() - 1, 1); // Remove trailing backslash
+	
+	_tprintf_s(_T("[VolumeClusterInfo] Volume device path: %s\n"), (LPCTSTR)volume_device_path_str_);
 
 	// Obtain cluster & sector size for the volume
 	DWORD sectors_per_cluster = 0;
