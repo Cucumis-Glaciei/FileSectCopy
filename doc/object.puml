@@ -1,0 +1,39 @@
+@startuml FileSectCopy_ObjDiagram
+class FileClusterDistribution {
+    - Const Int InitialPointersBufferSize = 8192
+    - CString file_path
+    - ByteArray retrieval_pointers
+
+    # LONGLONG file_size
+    + Constructor(CString path = "")
+}
+class VolumeClusterInfo {
+    - CString file_path_str_
+    - LONGLONG bytes_per_cluster_
+    - LONGLONG bytes_per_sector_
+    - LONGLONG retrieval_pointers_offset_
+
+    # CString volume_device_path_str_
+    
+    + LONGLONG GetBytesPerCluster()
+    + LONGLONG GetBytesPerSector()
+    + LONGLONG GetRetrievalPointersOffset()
+}
+class FileAsClusterFragments {
+    - LONGLONG totalFileSize
+    - CString volume_device_path_str
+
+    + Constructor(LONGLONG total_file_size, CString volume_device_path, std::vector<ClusterFragment> cluster_fragments)
+    + LONGLONG ExtractToFile(CString out_file_path)
+}
+class ClusterFragment {
+    # LONGLONG startOffset
+    # LONGLONG fragmentLength
+
+}
+
+FileClusterDistribution "1" - "1" VolumeClusterInfo : Refers >
+FileClusterDistribution "1" -- "1" FileAsClusterFragments : Generates  with getDistribution() >
+
+FileAsClusterFragments o- ClusterFragment : Consists of >
+@enduml
